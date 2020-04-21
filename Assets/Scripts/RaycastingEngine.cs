@@ -38,6 +38,8 @@ public class RaycastingEngine : MonoBehaviour
     CircleCollider2D hitBox;
     BoxCollider2D hurtBox;
 
+    public killEnemies killEnemies;
+
     [SerializeField]
     private LayerMask platformMask;
     [SerializeField]
@@ -118,6 +120,8 @@ public class RaycastingEngine : MonoBehaviour
     void Start()
     {
 
+        killEnemies = GetComponent<killEnemies>();
+
         outlineShades = Outline.GetComponentsInChildren<SpriteRenderer>();
 
         trail = GetComponent<TrailRenderer>();
@@ -130,7 +134,7 @@ public class RaycastingEngine : MonoBehaviour
 
         hitBox = GetComponent<CircleCollider2D>();
         hurtBox = GetComponent<BoxCollider2D>();
-        
+
 
         platformMask = LayerMask.GetMask("Ground");
 
@@ -191,336 +195,383 @@ public class RaycastingEngine : MonoBehaviour
     private void Update()
     {
 
-        if(dashCooldownLeft >= 0)
+
+        //else
+        //{
+        trail.emitting = false;
+        particles.SetActive(false);
+
+        jumpStartTimer -= Time.deltaTime;
+
+        bool jumpBtn = Input.GetButton("Jump");
+
+
+        if (jumpBtn && jumpInputDown == false)
         {
-            dashCooldownLeft -= Time.deltaTime;
 
-            foreach (var item in outlineShades)
-            {
+            jumpStartTimer = CoyoteTime;
 
-                item.color = new Color(0, 0, 0, 0);
 
-            }
+        }
 
+
+        //Koden för wallclinging är helt min egen, här kollar den om det finns en vägg till höger eller vänster.
+
+        if (wallRight.RaycastCheckClimbable(transform.position) == true)
+        {
+
+            climbDirection = 1;
+
+        }
+        else if (wallLeft.RaycastCheckClimbable(transform.position) == true)
+        {
+
+            climbDirection = -1;
         }
         else
         {
 
-            foreach (var item in outlineShades)
-            {
-
-                item.color = new Color(0, 0, 0, 255);
-
-            }
+            climbDirection = 0;
 
         }
 
-        if (dashTimeLeft >= 0)
+
+        jumpInputDown = jumpBtn;
+
+        Position.x = transform.position.x;
+        Position.y = transform.position.y;
+        //}
+
+        //private void FixedUpdate()
+        ////{
+        //animator.SetFloat("Speed", velocity.magnitude);
+        //facingRight = playerSprite.flipX;
+
+
+        switch (jumpState)
         {
 
-            transform.position = Vector3.Lerp(transform.position, dashPosition, dashTimeLeft);
-            dashTimeLeft -= Time.deltaTime;
+            case JumpState.None:
 
-            trail.emitting = true;
+                //JumpState none är alltså när man inte hoppar
+                //den byter till "Holding" när spelaren klickar på den angivna knappen och har jumps kvar
 
-
-
-        }
-        else
-        {
-            trail.emitting = false;
-            particles.SetActive(false);
-
-            jumpStartTimer -= Time.deltaTime;
-
-            bool jumpBtn = Input.GetButton("Jump");
-
-
-            if (jumpBtn && jumpInputDown == false)
-            {
-
-                jumpStartTimer = CoyoteTime;
-
-
-            }
-
-
-            //Koden för wallclinging är helt min egen, här kollar den om det finns en vägg till höger eller vänster.
-
-            if (wallRight.RaycastCheckClimbable(transform.position) == true)
-            {
-
-                climbDirection = 1;
-
-            }
-            else if (wallLeft.RaycastCheckClimbable(transform.position) == true)
-            {
-
-                climbDirection = -1;
-            }
-            else
-            {
-
-                climbDirection = 0;
-
-            }
-
-
-            jumpInputDown = jumpBtn;
-
-            Position.x = transform.position.x;
-            Position.y = transform.position.y;
-            //}
-
-            //private void FixedUpdate()
-            ////{
-            //animator.SetFloat("Speed", velocity.magnitude);
-            //facingRight = playerSprite.flipX;
-
-
-            switch (jumpState)
-            {
-
-                case JumpState.None:
-
-                    //JumpState none är alltså när man inte hoppar
-                    //den byter till "Holding" när spelaren klickar på den angivna knappen och har jumps kvar
-
-                    if (jumps > 0 && jumpStartTimer > 0)
-                    {
-                        //jumps = jumps - 1;
-
-                        jumpStartTimer = 0;
-                        jumpState = JumpState.Holding;
-                        jumpHoldTimer = 0;
-
-                        //Då ökas även den verikala velocityn.
-                        velocity.y = jumpStartSpeed;
-
-                    }
-                    break;
-
-                case JumpState.Holding:
-
-                    //JumpState Holding stängs av om man släpper knappen eller efter att man har hållt inne för länge.
-                    jumpHoldTimer += Time.deltaTime;
-
-                    //animator.SetBool("IsJumping", true);
-
-                    if (jumpInputDown == false || jumpHoldTimer >= jumpMaxHoldPeriod)
-                    {
-
-                        jumps = jumps - 1;
-                        jumpState = JumpState.None;
-
-                        velocity.y = Mathf.Lerp(jumpMinSpeed, jumpStartSpeed, jumpHoldTimer / jumpMaxHoldPeriod);
-
-
-                    }
-                    break;
-
-            }
-
-            if (groundDown.DoRaycast(transform.position) == true)
-            {
-                //animator.SetBool("IsJumping", false);
-                jumps = extraJumps + 1;
-
-            }
-            else
-            {
-
-            }
-
-            float xInput = Input.GetAxisRaw("Horizontal");
-
-            int wantedDirection = GetSign(xInput);
-            int velocityDirection = GetSign(velocity.x);
-
-            moveInput = wantedDirection;
-
-            if (facingRight == false && moveInput > 0) //this part is for flipping the player sprite depending on what direction its moving
-            {
-                Flip(); //call flip method
-            }
-            else if (facingRight == true && moveInput < 0)
-            {
-                Flip();
-            }
-
-            if (wantedDirection != 0)
-            {
-                //animator.SetFloat("Speed", 1);
-
-
-
-                if (wantedDirection != velocityDirection)
+                if (jumps > 0 && jumpStartTimer > 0)
                 {
-                    velocity.x = xSnapSpeed * wantedDirection;
+                    //jumps = jumps - 1;
+
+                    jumpStartTimer = 0;
+                    jumpState = JumpState.Holding;
+                    jumpHoldTimer = 0;
+
+                    //Då ökas även den verikala velocityn.
+                    velocity.y = jumpStartSpeed;
+
+                }
+                break;
+
+            case JumpState.Holding:
+
+                //JumpState Holding stängs av om man släpper knappen eller efter att man har hållt inne för länge.
+                jumpHoldTimer += Time.deltaTime;
+
+                //animator.SetBool("IsJumping", true);
+
+                if (jumpInputDown == false || jumpHoldTimer >= jumpMaxHoldPeriod)
+                {
+
+                    jumps = jumps - 1;
+                    jumpState = JumpState.None;
+
+                    velocity.y = Mathf.Lerp(jumpMinSpeed, jumpStartSpeed, jumpHoldTimer / jumpMaxHoldPeriod);
+
+
+                }
+                break;
+
+        }
+
+        if (groundDown.DoRaycast(transform.position) == true)
+        {
+            //animator.SetBool("IsJumping", false);
+            jumps = extraJumps + 1;
+
+        }
+        else
+        {
+
+        }
+
+        float xInput = Input.GetAxisRaw("Horizontal");
+
+        int wantedDirection = GetSign(xInput);
+        int velocityDirection = GetSign(velocity.x);
+
+        moveInput = wantedDirection;
+
+        if (facingRight == false && moveInput > 0) //this part is for flipping the player sprite depending on what direction its moving
+        {
+            Flip(); //call flip method
+        }
+        else if (facingRight == true && moveInput < 0)
+        {
+            Flip();
+        }
+
+        if (wantedDirection != 0)
+        {
+            //animator.SetFloat("Speed", 1);
+
+
+
+            if (wantedDirection != velocityDirection)
+            {
+                velocity.x = xSnapSpeed * wantedDirection;
+
+            }
+            else
+            {
+
+                velocity.x = Mathf.MoveTowards(velocity.x, xMaxSpeed * wantedDirection, xSpeedUpAccel * Time.deltaTime);
+
+            }
+
+        }
+        else
+        {
+
+            //animator.SetFloat("Speed", 0);
+            velocity.x = Mathf.MoveTowards(velocity.x, 0, xSpeedDownAccel * Time.deltaTime);
+
+        }
+
+
+
+
+        switch (clingState)
+        {
+            case ClingState.None:
+
+
+                if (climbDirection == wantedDirection && climbDirection != 0 && groundDown.DoRaycast(transform.position) != true)
+                {
+
+                    clingState = ClingState.Holding;
+                    jumps = extraJumps + 1;
+
+                }
+                break;
+
+            case ClingState.Holding:
+
+
+                jumpState = JumpState.None;
+                velocity.y = 0f;
+
+                if (wantedDirection == 0 && climbDirection != 0)
+                {
+
+
+                    clingState = ClingState.Sliding;
+
+
+                }
+                else if (climbDirection == 1 && wantedDirection < 0 || climbDirection == -1 && wantedDirection > 0)
+                {
+
+                    clingState = ClingState.None;
+
+                }
+                break;
+
+            case ClingState.Sliding:
+
+                velocity.y -= wallSlideAccel * Time.deltaTime;
+
+                if (velocity.y >= gravity || wantedDirection == climbDirection * -1)
+                {
+
+                    clingState = ClingState.None;
+
+                }
+                else if (climbDirection == wantedDirection && climbDirection != 0)
+                {
+
+                    clingState = ClingState.Holding;
+                    jumps = extraJumps + 1;
+
+                }
+                break;
+
+        }
+
+
+        if (jumpState == JumpState.None && clingState == ClingState.None && isPogoing == false)
+        {
+
+            velocity.y -= gravity * Time.deltaTime;
+
+        }
+
+
+
+
+        Vector2 displacement = Vector2.zero;
+        Vector2 wantedDisplacement = velocity * Time.deltaTime;
+
+
+
+        if (velocity.x > 0)
+        {
+
+            displacement.x = moveRight.DoRaycast(transform.position, wantedDisplacement.x);
+        }
+        else if (velocity.x < 0)
+        {
+
+            displacement.x = -moveLeft.DoRaycast(transform.position, -wantedDisplacement.x);
+        }
+
+        if (velocity.y > 0)
+        {
+
+            displacement.y = moveUp.DoRaycast(transform.position, wantedDisplacement.y);
+
+        }
+        else if (velocity.y < 0)
+        {
+
+            displacement.y = -moveDown.DoRaycast(transform.position, -wantedDisplacement.y);
+
+        }
+
+
+
+        if (Mathf.Approximately(displacement.x, wantedDisplacement.x) == false)
+        {
+            velocity.x = 0;
+        }
+        if (Mathf.Approximately(displacement.y, wantedDisplacement.y) == false)
+        {
+            velocity.y = 0;
+        }
+
+
+
+        transform.Translate(displacement);
+
+
+        //}
+
+        switch (dashState)
+        {
+            case DashState.None:
+
+
+                if (dashCooldownLeft >= 0)
+                {
+                    dashCooldownLeft -= Time.deltaTime;
+
+                    //foreach (var item in outlineShades)
+                    //{
+
+                    //    item.color = new Color(0, 0, 0, 0);
+
+                    //}
 
                 }
                 else
                 {
 
-                    velocity.x = Mathf.MoveTowards(velocity.x, xMaxSpeed * wantedDirection, xSpeedUpAccel * Time.deltaTime);
+                    foreach (var item in outlineShades)
+                    {
+
+                        item.color = new Color(0, 0, 0, 255);
+
+                    }
 
                 }
 
-            }
-            else
-            {
+                if (Input.GetMouseButtonDown(0) && dashCooldownLeft < 0)
+                {
 
-                //animator.SetFloat("Speed", 0);
-                velocity.x = Mathf.MoveTowards(velocity.x, 0, xSpeedDownAccel * Time.deltaTime);
+                    hurtBox.enabled = false;
+                    hitBox.enabled = true;
 
-            }
-
-
-
-
-            switch (clingState)
-            {
-                case ClingState.None:
-
-
-                    if (climbDirection == wantedDirection && climbDirection != 0 && groundDown.DoRaycast(transform.position) != true)
+                    foreach (var item in outlineShades)
                     {
 
-                        clingState = ClingState.Holding;
-                        jumps = extraJumps + 1;
+                        item.color = new Color(0, 0, 0, 0);
 
                     }
-                    break;
 
-                case ClingState.Holding:
+                    particles.SetActive(true);
 
-
-                    jumpState = JumpState.None;
-                    velocity.y = 0f;
-
-                    if (wantedDirection == 0 && climbDirection != 0)
+                    if (facingRight && transform.position.x - dashPosition.x < 0)
                     {
 
-
-                        clingState = ClingState.Sliding;
-
+                        Flip();
 
                     }
-                    else if (climbDirection == 1 && wantedDirection < 0 || climbDirection == -1 && wantedDirection > 0)
+                    if (!facingRight && transform.position.x - dashPosition.x > 0)
                     {
 
-                        clingState = ClingState.None;
+                        Flip();
 
                     }
-                    break;
 
-                case ClingState.Sliding:
+                    velocity = Vector3.zero;
 
-                    velocity.y -= wallSlideAccel * Time.deltaTime;
+                    dashCooldownLeft = dashCooldown;
 
-                    if (velocity.y >= gravity || wantedDirection == climbDirection * -1)
+                    dashPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+                    dashPosition.z = 0;
+
+                    dashTimeLeft = dashTime;
+
+                    dashState = DashState.Dashing;
+
+                }
+
+
+
+                break;
+
+            case DashState.Dashing:
+
+
+
+
+                if (dashTimeLeft >= 0)
+                {
+
+                    transform.position = Vector3.Lerp(transform.position, dashPosition, dashTimeLeft);
+                    dashTimeLeft -= Time.deltaTime;
+
+                    trail.emitting = true;
+
+
+
+                }
+                else
+                {
+
+                    hitBox.enabled = false;
+                    hurtBox.enabled = true;
+
+                    if(killEnemies.enemiesToMurder != null)
                     {
 
-                        clingState = ClingState.None;
+                        killEnemies.KillEnemies();
 
                     }
-                    else if (climbDirection == wantedDirection && climbDirection != 0)
-                    {
 
-                        clingState = ClingState.Holding;
-                        jumps = extraJumps + 1;
+                    dashState = DashState.None;
 
-                    }
-                    break;
+                }
 
-            }
-
-
-            if (jumpState == JumpState.None && clingState == ClingState.None && isPogoing == false)
-            {
-
-                velocity.y -= gravity * Time.deltaTime;
-
-            }
-
-
-
-
-            Vector2 displacement = Vector2.zero;
-            Vector2 wantedDisplacement = velocity * Time.deltaTime;
-
-
-
-            if (velocity.x > 0)
-            {
-
-                displacement.x = moveRight.DoRaycast(transform.position, wantedDisplacement.x);
-            }
-            else if (velocity.x < 0)
-            {
-
-                displacement.x = -moveLeft.DoRaycast(transform.position, -wantedDisplacement.x);
-            }
-
-            if (velocity.y > 0)
-            {
-
-                displacement.y = moveUp.DoRaycast(transform.position, wantedDisplacement.y);
-
-            }
-            else if (velocity.y < 0)
-            {
-
-                displacement.y = -moveDown.DoRaycast(transform.position, -wantedDisplacement.y);
-
-            }
-
-
-
-            if (Mathf.Approximately(displacement.x, wantedDisplacement.x) == false)
-            {
-                velocity.x = 0;
-            }
-            if (Mathf.Approximately(displacement.y, wantedDisplacement.y) == false)
-            {
-                velocity.y = 0;
-            }
-
-
-
-            transform.Translate(displacement);
-
-
-        }
-        if (Input.GetMouseButtonDown(0) && dashCooldownLeft < 0)
-        {
-
-
-
-            particles.SetActive(true);
-
-            if(facingRight && transform.position.x - dashPosition.x < 0)
-            {
-
-                Flip();
-
-            }
-            if(!facingRight && transform.position.x - dashPosition.x > 0)
-            {
-
-                Flip();
-
-            }
-
-            velocity = Vector3.zero;
-
-            dashCooldownLeft = dashCooldown;
-
-            dashPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-            dashPosition.z = 0;
-
-            dashTimeLeft = dashTime;
+                break;
 
 
         }
@@ -528,7 +579,7 @@ public class RaycastingEngine : MonoBehaviour
 
 
 
-    }
+        }
 
     private void Flip()
     {

@@ -971,6 +971,7 @@ GameObject:
   - component: {fileID: 1359346040}
   - component: {fileID: 1359346042}
   - component: {fileID: 1359346043}
+  - component: {fileID: 1359346044}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -992,6 +993,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Outline: {fileID: 245126584}
   outlineShades: []
+  killEnemies: {fileID: 0}
   platformMask:
     serializedVersion: 2
     m_Bits: 256
@@ -1260,12 +1262,26 @@ CircleCollider2D:
   m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 5
+--- !u!114 &1359346044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1359346035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 098ac873c170e82409c624e31b66777c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pausePerEnemy: 0.2
+  mainCamera: {fileID: 0}
 --- !u!1 &1527405965
 GameObject:
   m_ObjectHideFlags: 0
@@ -1279,6 +1295,7 @@ GameObject:
   - component: {fileID: 1527405967}
   - component: {fileID: 1527405966}
   - component: {fileID: 1527405970}
+  - component: {fileID: 1527405971}
   m_Layer: 0
   m_Name: enemy
   m_TagString: Enemy
@@ -1385,14 +1402,26 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 60
-  m_LinearDrag: 5
-  m_AngularDrag: 5
+  m_LinearDrag: 1
+  m_AngularDrag: 1
   m_GravityScale: 1
   m_Material: {fileID: 0}
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &1527405971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1527405965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8121296c9203fb149a26de78237bf4b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1582866783
 GameObject:
   m_ObjectHideFlags: 0
@@ -6368,6 +6397,7 @@ GameObject:
   - component: {fileID: 2026643163}
   - component: {fileID: 2026643162}
   - component: {fileID: 2026643161}
+  - component: {fileID: 2026643166}
   m_Layer: 0
   m_Name: enemy (1)
   m_TagString: Enemy
@@ -6388,8 +6418,8 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 60
-  m_LinearDrag: 5
-  m_AngularDrag: 5
+  m_LinearDrag: 1
+  m_AngularDrag: 1
   m_GravityScale: 1
   m_Material: {fileID: 0}
   m_Interpolate: 0
@@ -6482,3 +6512,15 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2026643166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2026643160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8121296c9203fb149a26de78237bf4b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
